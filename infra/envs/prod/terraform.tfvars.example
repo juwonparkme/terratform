@@ -1,0 +1,40 @@
+project_name = "deeplx-proxy"
+environment  = "prod"
+aws_region   = "ap-northeast-2"
+lambda_size  = 15
+
+lambda_runtime        = "python3.12"
+lambda_handler        = "service/main.handler"
+lambda_architectures  = ["x86_64"]
+lambda_memory_size    = 256
+lambda_timeout        = 300
+log_retention_in_days = 14
+
+lambda_app_archive_path   = "../../../dist/lambda-app.zip"
+lambda_layer_archive_path = "../../../dist/lambda-layer.zip"
+lambda_app_s3_key         = "apps/lambda-app.zip"
+artifact_bucket_name      = "change-me-deeplx-proxy-prod-artifacts"
+
+artifact_bucket_force_destroy = false
+create_vpc                    = true
+enable_vpc                    = false
+
+availability_zones  = ["ap-northeast-2a", "ap-northeast-2c"]
+vpc_cidr            = "10.30.0.0/16"
+public_subnet_cidrs = ["10.30.10.0/24", "10.30.11.0/24"]
+private_subnet_cidrs = ["10.30.1.0/24", "10.30.2.0/24"]
+
+vpc_id             = null
+public_subnet_ids  = []
+private_subnet_ids = []
+
+certificate_arn         = null
+domain_name             = null
+hosted_zone_id          = null
+alb_deletion_protection = false
+
+environment_variables = {}
+
+tags = {
+  Owner = "Juwon Park"
+}
