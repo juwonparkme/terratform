@@ -11,3 +11,5 @@ override.tf.json
 .venv313/
 __pycache__/
 dist/
+infra/envs/prod/backend.hcl
+infra/envs/prod/terraform.tfvars
