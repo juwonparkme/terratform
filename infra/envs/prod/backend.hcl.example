@@ -1,6 +1,5 @@
 bucket         = "REPLACE_ME_TERRAFORM_STATE_BUCKET"
 key            = "terratform/deeplx-proxy/prod.tfstate"
-region         = "ap-northeast-2"
+region         = "us-east-1"
 dynamodb_table = "REPLACE_ME_TERRAFORM_LOCKS"
 encrypt        = true
-

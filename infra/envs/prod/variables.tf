@@ -13,7 +13,7 @@ variable "environment" {
 variable "aws_region" {
   description = "Primary AWS region."
   type        = string
-  default     = "ap-northeast-2"
+  default     = "us-east-1"
 }
 
 variable "lambda_size" {
@@ -103,7 +103,7 @@ variable "enable_vpc" {
 variable "availability_zones" {
   description = "Availability zones for the managed VPC."
   type        = list(string)
-  default     = ["ap-northeast-2a", "ap-northeast-2c"]
+  default     = ["us-east-1a", "us-east-1b"]
 }
 
 variable "vpc_cidr" {

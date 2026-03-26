@@ -5,6 +5,8 @@ DeepLX Lambda proxy Terraform workspace.
 ## Layout
 
 - `app/service`: FastAPI Lambda app
+- `docs/aws-manual-inputs.md`: AWS에서 수동 준비할 값 정리
+- `docs/terraform-state-bucket-setup.md`: Terraform 전용 state bucket / lock table 생성 방법
 - `infra/modules/deeplx_proxy`: DeepLX Lambda proxy module
 - `infra/envs/prod`: production root config
 - `scripts/build-lambda.sh`: Lambda artifact builder
