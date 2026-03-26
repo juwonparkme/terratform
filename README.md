@@ -6,6 +6,7 @@ DeepLX Lambda proxy Terraform workspace.
 
 - `app/service`: FastAPI Lambda app
 - `docs/aws-manual-inputs.md`: AWS에서 수동 준비할 값 정리
+- `docs/deeplx-proxy-runbook.md`: 빌드, 배포, 검증, 삭제 전체 매뉴얼
 - `docs/terraform-state-bucket-setup.md`: Terraform 전용 state bucket / lock table 생성 방법
 - `infra/modules/deeplx_proxy`: DeepLX Lambda proxy module
 - `infra/envs/prod`: production root config
