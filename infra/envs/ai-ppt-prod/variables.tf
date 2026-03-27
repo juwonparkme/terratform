@@ -63,6 +63,30 @@ variable "repo_branch" {
   default     = "main"
 }
 
+variable "app_directory" {
+  description = "Absolute directory where the app repo will live on the instance."
+  type        = string
+  default     = "/opt/ai-ppt"
+}
+
+variable "bootstrap_packages" {
+  description = "APT packages installed during first boot."
+  type        = list(string)
+  default = [
+    "ca-certificates",
+    "curl",
+    "git",
+    "docker.io",
+    "docker-compose-plugin",
+  ]
+}
+
+variable "bootstrap_post_clone_commands" {
+  description = "Additional shell commands executed after repo clone/update."
+  type        = list(string)
+  default     = []
+}
+
 variable "public_ports" {
   description = "Public ports to open."
   type = list(object({

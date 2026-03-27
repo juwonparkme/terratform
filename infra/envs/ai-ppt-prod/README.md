@@ -2,6 +2,20 @@
 
 Lightsail 기반 `ai_ppt` 운영 환경.
 
+이 env는 다음 웹앱 배포 때도 템플릿처럼 복제해서 재사용하는 기준본.
+
+## Reuse
+
+비슷한 웹앱을 추가할 때는 `envs/ai-ppt-prod` 를 복제해서 새 env 만들고 아래 값만 교체.
+
+1. `project_name`
+2. `repo_url`
+3. `repo_branch`
+4. `app_directory`
+5. `domain_name`
+6. `hosted_zone_id`
+7. `bootstrap_post_clone_commands`
+
 ## Flow
 
 1. `terraform init`
