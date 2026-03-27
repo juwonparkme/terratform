@@ -1,0 +1,26 @@
+#!/bin/bash
+set -euxo pipefail
+
+export DEBIAN_FRONTEND=noninteractive
+
+apt-get update
+apt-get install -y ca-certificates curl git docker.io docker-compose-plugin
+systemctl enable --now docker
+usermod -aG docker ubuntu || true
+
+mkdir -p /opt/ai-ppt
+
+if [ ! -d /opt/ai-ppt/.git ]; then
+  git clone --depth 1 --branch ${repo_branch} ${repo_url} /opt/ai-ppt
+else
+  git -C /opt/ai-ppt fetch --all
+  git -C /opt/ai-ppt checkout ${repo_branch}
+  git -C /opt/ai-ppt pull --ff-only
+fi
+
+if [ ! -f /opt/ai-ppt/deploy/lightsail/app.env ]; then
+  cp /opt/ai-ppt/deploy/lightsail/app.env.example /opt/ai-ppt/deploy/lightsail/app.env
+fi
+
+mkdir -p /opt/ai-ppt/deploy/lightsail/secrets
+chown -R ubuntu:ubuntu /opt/ai-ppt

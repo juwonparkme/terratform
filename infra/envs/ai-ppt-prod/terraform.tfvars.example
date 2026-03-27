@@ -1,0 +1,17 @@
+project_name      = "ai-ppt"
+environment       = "prod"
+aws_region        = "us-east-1"
+availability_zone = "us-east-1a"
+blueprint_id      = "ubuntu_24_04"
+bundle_id         = "micro_3_0"
+key_pair_name     = "change-me"
+
+domain_name    = null
+hosted_zone_id = null
+
+repo_url    = "https://github.com/juwonparkme/ai_ppt.git"
+repo_branch = "main"
+
+tags = {
+  Owner = "Juwon Park"
+}
