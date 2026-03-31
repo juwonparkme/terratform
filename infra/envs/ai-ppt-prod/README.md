@@ -25,5 +25,7 @@ Lightsail 기반 `ai_ppt` 운영 환경.
 5. `terraform apply`
 6. 생성된 Lightsail 인스턴스에 SSH 접속
 7. `/opt/ai-ppt/deploy/lightsail/app.env` 값 채우기
+   - reverse proxy 는 Nginx 기준
+   - HTTPS 운영이면 `NGINX_SERVER_NAME`, `LETSENCRYPT_EMAIL` 같이 입력
 8. `/opt/ai-ppt/deploy/lightsail/secrets/` 에 필요한 JSON 업로드
 9. `/opt/ai-ppt/deploy/lightsail/deploy.sh`
