@@ -41,40 +41,40 @@
   <text x="116" y="184" fill="#CBD5E1" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="24" letter-spacing="1.2">Terraform workspace for repeatable AWS delivery patterns</text>
 
   <g transform="translate(112 246)">
-    <rect width="298" height="144" rx="24" fill="url(#card)" stroke="#F8FAFC" stroke-opacity="0.16"/>
+    <rect width="350" height="144" rx="24" fill="url(#card)" stroke="#F8FAFC" stroke-opacity="0.16"/>
     <text x="28" y="44" fill="#FDE68A" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="16" letter-spacing="2.8">ENV</text>
     <text x="28" y="82" fill="#F8FAFC" font-family="Georgia, 'Times New Roman', serif" font-size="30">prod / ai-ppt-prod</text>
     <text x="28" y="118" fill="#CBD5E1" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="19">실행 진입점, 변수, backend, outputs</text>
   </g>
 
-  <g transform="translate(484 246)">
+  <g transform="translate(534 246)">
     <rect width="298" height="144" rx="24" fill="url(#card)" stroke="#F8FAFC" stroke-opacity="0.16"/>
     <text x="28" y="44" fill="#FDE68A" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="16" letter-spacing="2.8">MODULE</text>
     <text x="28" y="82" fill="#F8FAFC" font-family="Georgia, 'Times New Roman', serif" font-size="30">deeplx / lightsail</text>
     <text x="28" y="118" fill="#CBD5E1" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="19">재사용 가능한 인프라 패턴</text>
   </g>
 
-  <g transform="translate(856 246)">
+  <g transform="translate(906 246)">
     <rect width="360" height="144" rx="24" fill="url(#card)" stroke="#F8FAFC" stroke-opacity="0.16"/>
     <text x="28" y="44" fill="#7DD3FC" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="16" letter-spacing="2.8">FLOW</text>
     <text x="28" y="82" fill="#F8FAFC" font-family="Georgia, 'Times New Roman', serif" font-size="26">build → apply → verify</text>
     <text x="28" y="118" fill="#CBD5E1" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="19">배포 전후 검증과 정리까지 포함</text>
   </g>
 
-  <g transform="translate(1290 246)">
+  <g transform="translate(1340 246)">
     <rect width="260" height="144" rx="24" fill="url(#card)" stroke="#F8FAFC" stroke-opacity="0.16"/>
     <text x="28" y="44" fill="#7DD3FC" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="16" letter-spacing="2.8">DOCS</text>
     <text x="28" y="82" fill="#F8FAFC" font-family="Georgia, 'Times New Roman', serif" font-size="30">runbook first</text>
     <text x="28" y="118" fill="#CBD5E1" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="19">설계, 입력값, teardown 기록</text>
   </g>
 
-  <path d="M410 350H472" stroke="url(#line)" stroke-width="4" stroke-linecap="round"/>
-  <path d="M782 350H844" stroke="url(#line)" stroke-width="4" stroke-linecap="round"/>
-  <path d="M1216 350H1278" stroke="url(#line)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M462 350H524" stroke="url(#line)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M832 350H894" stroke="url(#line)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M1266 350H1328" stroke="url(#line)" stroke-width="4" stroke-linecap="round"/>
 
-  <circle cx="410" cy="350" r="8" fill="#F59E0B"/>
-  <circle cx="782" cy="350" r="8" fill="#FDE68A"/>
-  <circle cx="1216" cy="350" r="8" fill="#38BDF8"/>
+  <circle cx="462" cy="350" r="8" fill="#F59E0B"/>
+  <circle cx="832" cy="350" r="8" fill="#FDE68A"/>
+  <circle cx="1266" cy="350" r="8" fill="#38BDF8"/>
 
   <text x="112" y="486" fill="#94A3B8" font-family="'Trebuchet MS', 'Segoe UI', sans-serif" font-size="18" letter-spacing="1.2">modular AWS infra / lambda proxy / lightsail host / documented teardown</text>
 </svg>
