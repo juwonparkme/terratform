@@ -1,0 +1,5 @@
+bucket         = "REPLACE_ME_TERRAFORM_STATE_BUCKET"
+key            = "terratform/quiz-ai/prod.tfstate"
+region         = "us-east-1"
+dynamodb_table = "REPLACE_ME_TERRAFORM_LOCKS"
+encrypt        = true

@@ -1,150 +1,222 @@
+<a id="top"></a>
+
 <p align="center">
   <img src="./docs/assets/readme-hero.svg" alt="terratform hero" width="100%" />
 </p>
 
-# terratform
+# terratform - AWS Terraform 인프라 워크스페이스
 
-**AWS 인프라를 Terraform으로 관리하고, 서비스별 배포 패턴을 재사용 가능한 모듈로 정리한 워크스페이스.**
+<div align="center">
 
-이 저장소는 단순히 `.tf` 파일을 모아둔 곳이 아니다.  
-현재는 두 가지 흐름을 담고 있다.
+![terratform](https://img.shields.io/badge/terratform-AWS%20IaC-green)
+![Terraform](https://img.shields.io/badge/Terraform-%3E%3D1.6-7B42BC?logo=terraform)
+![AWS](https://img.shields.io/badge/AWS-Lightsail%20%7C%20Lambda%20%7C%20ALB-FF9900?logo=amazonaws)
+![FastAPI](https://img.shields.io/badge/FastAPI-0.116.1-009688?logo=fastapi)
 
-- **DeepLX Lambda Proxy**: `ALB + Lambda + S3 artifact + Terraform backend`
-- **Lightsail App Host**: Lightsail 기반 웹앱 운영 환경 템플릿
+**서비스별 AWS 인프라를 env와 module로 나눠 안전하게 반복 배포하는 Terraform 저장소**
 
-핵심은 서비스별로 다른 배포 방식을 쓰더라도, `env -> module -> docs` 구조를 유지해서 재사용성과 운영 가시성을 같이 챙기는 것이다.
+[문서](./docs/deeplx-proxy-runbook.md) | [State 설정](./docs/terraform-state-bucket-setup.md) | [이슈 리포트](https://github.com/juwonparkme/terratform/issues)
 
-## 무엇을 하는 저장소인가
+</div>
 
-이 저장소는 아래 작업을 하기 위한 기준 workspace다.
+---
 
-- Terraform으로 AWS 리소스를 선언적으로 생성하고 삭제
-- 서비스별 환경을 `infra/envs/*` 로 분리
-- 재사용 가능한 인프라 조각을 `infra/modules/*` 로 관리
-- 배포 전에 필요한 빌드, 테스트, 검증 흐름 정리
-- 실제 배포 후 `verify -> destroy` 까지 닫힌 운영 루프 유지
+## 📋 목차
 
-## 현재 포함된 환경
+- [소개](#-소개)
+- [주요 기능](#-주요-기능)
+- [기술 스택](#-기술-스택)
+- [시작하기](#-시작하기)
+  - [필수 요구사항](#필수-요구사항)
+  - [설치](#설치)
+  - [환경 변수 설정](#환경-변수-설정)
+  - [배포값 설정](#배포값-설정)
+  - [실행](#실행)
+- [배포](#-배포)
+- [프로젝트 구조](#-프로젝트-구조)
+- [주요 기능 상세](#-주요-기능-상세)
+- [트러블슈팅](#-트러블슈팅)
+- [라이선스](#-라이선스)
+- [문의](#-문의)
 
-| 환경 | 목적 | 주요 리소스 | 진입 파일 |
-|---|---|---|---|
-| `prod` | DeepLX 프록시를 Lambda 기반으로 배포 | ALB, Lambda, Lambda Layer, S3 artifact bucket, VPC | `infra/envs/prod/main.tf` |
-| `ai-ppt-prod` | Lightsail 기반 웹앱 운영 환경 | Lightsail instance, static IP, Route53 | `infra/envs/ai-ppt-prod/main.tf` |
+---
 
-## 현재 포함된 모듈
+## 🎯 소개
 
-| 모듈 | 역할 | 위치 |
-|---|---|---|
-| `deeplx_proxy` | DeepLX 프록시용 AWS 리소스 묶음 | `infra/modules/deeplx_proxy` |
-| `lightsail_app_host` | Lightsail 기반 앱 호스팅 템플릿 | `infra/modules/lightsail_app_host` |
+**terratform**은 Juwon Park의 AWS 인프라를 Terraform으로 관리하는 워크스페이스입니다. Lambda 프록시, Lightsail 웹앱 호스트, 서비스별 production env를 같은 구조로 정리해 배포 전 검증과 운영 문서까지 한 흐름으로 묶습니다.
 
-## 빠른 시작
+### 핵심 가치
 
-가장 자주 쓰는 흐름은 `DeepLX Lambda Proxy` 기준이다.
+- **환경 분리**: `infra/envs/*`에서 서비스별 실행 단위를 분리
+- **모듈 재사용**: `infra/modules/*`에서 Lambda 프록시와 Lightsail 호스팅 패턴 재사용
+- **검증 중심 운영**: build, test, validate, plan, apply 순서를 문서와 코드에 고정
+- **최소 비용 선택지**: 작은 웹앱은 Lightsail 단일 서버로 시작 가능
 
-### 1. 요구 사항
+---
+
+## ✨ 주요 기능
+
+### 1. DeepLX Lambda Proxy 인프라
+- FastAPI 앱을 Lambda + ALB 구조로 배포
+- Lambda artifact와 dependency layer를 zip으로 빌드
+- ALB path routing으로 여러 Lambda target group 연결
+- S3 artifact bucket, IAM role, CloudWatch log group 포함
+
+### 2. Lightsail 웹앱 호스팅 템플릿
+- Lightsail instance, static IP, public ports를 공통 모듈로 관리
+- `ai-ppt-prod`와 `quiz-ai-prod` 같은 웹앱 env를 같은 방식으로 추가
+- Route53 A record는 `domain_name`과 `hosted_zone_id`가 있을 때만 생성
+
+### 3. Terraform state와 운영 문서
+- S3 backend와 DynamoDB lock table 설정 예시 제공
+- 서비스별 `terraform.tfvars.example`과 `backend.hcl.example` 제공
+- runbook과 manual input 문서로 AWS 콘솔 확인값 분리
+
+---
+
+## 🛠 기술 스택
+
+### Infrastructure
+- **Terraform >= 1.6** - AWS 리소스 선언 및 state 관리
+- **AWS Provider ~> 6.0** - Lightsail, Lambda, ALB, S3, IAM, Route53 관리
+- **S3 Backend / DynamoDB Lock** - 원격 state와 동시 실행 잠금
+
+### Application Runtime
+- **FastAPI 0.116.1** - DeepLX Lambda Proxy HTTP API
+- **Mangum 0.19.0** - FastAPI 앱을 AWS Lambda handler로 연결
+- **Python** - Lambda artifact 빌드와 로컬 테스트 런타임
+
+### 배포 및 인프라
+- **AWS Lambda + ALB** - DeepLX proxy production 패턴
+- **AWS Lightsail** - 최소 비용 웹앱 서버 패턴
+- **Nginx / Gunicorn / MySQL** - `quiz-ai-prod` 첫 부팅 구성
+
+### 주요 라이브러리
+- **aiohttp** - upstream HTTP 요청 fan-out
+- **pydantic / pydantic-settings** - 요청 모델과 환경 설정
+- **pytest** - Lambda proxy 단위 테스트
+
+---
+
+## 🚀 시작하기
+
+### 필수 요구사항
 
 - Terraform `>= 1.6`
 - AWS CLI 인증 완료
 - Python `3.13` 권장
-- `zip` 사용 가능 환경
+- `zip` 명령
+- S3 backend를 쓸 경우 state bucket과 DynamoDB lock table
 
 권장 확인:
 
-```sh
+```bash
 terraform version
 aws sts get-caller-identity
 python3.13 --version
 ```
 
-### 2. 로컬 아티팩트 빌드
+### 설치
 
-```sh
-PYTHON_BIN=python3.13 bash scripts/build-lambda.sh
+1. **저장소 클론**
+```bash
+git clone https://github.com/juwonparkme/terratform.git
+cd terratform
 ```
 
-생성물:
-
-- `dist/lambda-app.zip`
-- `dist/lambda-layer.zip`
-
-### 3. 로컬 테스트
-
-```sh
+2. **개발 의존성 설치**
+```bash
+python3.13 -m venv .venv313
 source .venv313/bin/activate
-PYTHONPATH=app pytest -q
+pip install -r requirements.txt -r requirements-dev.txt
 ```
 
-### 4. Terraform 입력값 준비
+### 환경 변수 설정
 
-예시 파일을 복사해서 로컬 전용 설정을 만든다.
+DeepLX Lambda Proxy 로컬 실행은 기본값만으로 시작할 수 있습니다.
 
-```sh
+```env
+FUNCTION_INDEX=0
+REQUEST_TIMEOUT_SECS=30
+```
+
+### 배포값 설정
+
+예시 파일을 복사한 뒤 실제 AWS 값으로 채웁니다.
+
+```bash
 cp infra/envs/prod/backend.hcl.example infra/envs/prod/backend.hcl
 cp infra/envs/prod/terraform.tfvars.example infra/envs/prod/terraform.tfvars
 ```
 
-각 파일 역할:
+Lightsail env는 각 폴더의 `terraform.tfvars.example`을 사용합니다.
 
-- `backend.hcl`: Terraform state 저장 위치
-- `terraform.tfvars`: 실제 배포값
+```bash
+cp infra/envs/quiz-ai-prod/terraform.tfvars.example infra/envs/quiz-ai-prod/terraform.tfvars
+```
 
-### 5. 초기화 / 검증 / 계획
+### 실행
 
-```sh
+로컬 FastAPI 서버:
+
+```bash
+PYTHON_BIN=python3.13 bash scripts/local-run.sh
+```
+
+테스트:
+
+```bash
+source .venv313/bin/activate
+PYTHONPATH=app pytest -q
+```
+
+---
+
+## 📦 배포
+
+### DeepLX Lambda Proxy
+
+1. **Lambda artifact 빌드**
+```bash
+PYTHON_BIN=python3.13 bash scripts/build-lambda.sh
+```
+
+2. **Terraform 초기화**
+```bash
 terraform -chdir=infra/envs/prod init -backend-config=backend.hcl
+```
+
+3. **검증과 계획**
+```bash
 terraform -chdir=infra/envs/prod validate
 terraform -chdir=infra/envs/prod plan
 ```
 
-### 6. 배포
-
-```sh
-terraform -chdir=infra/envs/prod apply -auto-approve
+4. **적용**
+```bash
+terraform -chdir=infra/envs/prod apply
 ```
 
-### 7. 정리
+### Lightsail 웹앱 env
 
-```sh
-terraform -chdir=infra/envs/prod destroy -auto-approve
+`ai-ppt-prod`와 `quiz-ai-prod`는 같은 Lightsail 모듈을 사용합니다.
+
+```bash
+terraform -chdir=infra/envs/quiz-ai-prod init -backend=false
+terraform -chdir=infra/envs/quiz-ai-prod validate
+terraform -chdir=infra/envs/quiz-ai-prod plan -var key_pair_name=<lightsail-key-pair>
 ```
 
-주의:
+`quiz-ai-prod`는 첫 부팅에서 Nginx, MySQL, Python venv, Gunicorn systemd service를 구성하고 `/opt/quiz-ai/.env`에 서버 로컬 secret을 만듭니다.
 
-- `destroy` 는 Terraform이 관리하는 리소스만 삭제한다.
-- backend S3 bucket / DynamoDB lock table 같은 bootstrap 자원은 별도 정리가 필요할 수 있다.
+---
 
-## DeepLX Proxy 구조
-
-현재 `prod` 환경은 아래 흐름으로 동작한다.
-
-```mermaid
-flowchart LR
-    U["Client"] --> ALB["Application Load Balancer"]
-    ALB --> V0["/v0/*"]
-    ALB --> V1["/v1/*"]
-    V0 --> L0["Lambda 0"]
-    V1 --> L1["Lambda 1"]
-    L0 --> UP["Upstream API"]
-    L1 --> UP
-    S3["Artifact Bucket"] --> L0
-    S3 --> L1
-    State["Terraform Backend\nS3 + DynamoDB"] -. state / lock .- TF["Terraform"]
-```
-
-핵심 포인트:
-
-- ALB는 path 기반으로 Lambda를 라우팅한다.
-- Lambda 코드는 로컬에서 zip으로 빌드한 뒤 S3 artifact bucket을 통해 배포된다.
-- Terraform backend는 서비스 리소스와 별개로 관리된다.
-- 현재 기본 테스트 구성은 `HTTP only` 이고, HTTPS/도메인은 옵션이다.
-
-## 저장소 구조
+## 📁 프로젝트 구조
 
 ```text
-.
+terratform/
 ├── app/
-│   └── service/                  # FastAPI Lambda 앱
+│   └── service/                  # FastAPI Lambda proxy 앱
 ├── docs/
 │   ├── assets/                   # README 시각 자산
 │   ├── aws-manual-inputs.md
@@ -153,11 +225,12 @@ flowchart LR
 │   └── terraform-state-bucket-setup.md
 ├── infra/
 │   ├── envs/
-│   │   ├── prod/                 # DeepLX proxy 실행 진입점
-│   │   └── ai-ppt-prod/          # Lightsail 기반 운영 env
+│   │   ├── prod/                 # DeepLX Lambda Proxy env
+│   │   ├── ai-ppt-prod/          # ai_ppt Lightsail env
+│   │   └── quiz-ai-prod/         # Quiz_Ai 최소 비용 Lightsail env
 │   └── modules/
-│       ├── deeplx_proxy/         # Lambda + ALB 모듈
-│       └── lightsail_app_host/   # Lightsail 템플릿 모듈
+│       ├── deeplx_proxy/         # Lambda + ALB + S3 + IAM 모듈
+│       └── lightsail_app_host/   # Lightsail app host 모듈
 ├── scripts/
 │   ├── build-lambda.sh
 │   └── local-run.sh
@@ -166,45 +239,87 @@ flowchart LR
 └── README.md
 ```
 
-## 자주 보는 파일
+---
 
-| 파일 | 왜 중요한가 |
-|---|---|
-| `infra/envs/prod/main.tf` | `prod` 환경에서 어떤 모듈을 어떤 값으로 호출하는지 보여줌 |
-| `infra/envs/prod/terraform.tfvars.example` | 실제 배포값이 어떤 형태인지 보여줌 |
-| `infra/envs/prod/backend.hcl.example` | Terraform state backend 설정 예시 |
-| `infra/modules/deeplx_proxy/main.tf` | 모듈 내부 공통 계산과 입력 검증 |
-| `infra/modules/deeplx_proxy/lambda.tf` | Lambda / layer / 로그 그룹 생성 |
-| `infra/modules/deeplx_proxy/alb.tf` | ALB / listener / target group / path routing |
-| `infra/modules/deeplx_proxy/network.tf` | VPC / subnet / security group |
+## 🎨 주요 기능 상세
 
-## 문서 가이드
+### 1. Env와 module 분리
 
-작업 목적에 따라 아래 문서를 먼저 보면 된다.
+- **env**: 실제 실행 단위. provider, backend, tfvars, module 호출을 둠
+- **module**: 재사용 가능한 리소스 묶음. 서비스별 env가 입력값만 바꿔 호출
+- **현재 env**: `prod`, `ai-ppt-prod`, `quiz-ai-prod`
+- **현재 module**: `deeplx_proxy`, `lightsail_app_host`
 
-| 문서 | 용도 |
-|---|---|
-| `docs/deeplx-proxy-runbook.md` | DeepLX proxy 배포, 검증, 삭제 전체 흐름 |
-| `docs/aws-manual-inputs.md` | AWS에서 직접 확인하거나 만들어야 하는 값 정리 |
-| `docs/terraform-state-bucket-setup.md` | state bucket / lock table 준비 |
-| `docs/deeplx-lambda-proxy-apply-plan.md` | 초기 설계 방향과 적용 계획 |
+### 2. DeepLX Lambda Proxy
 
-## 개발 메모
+- **진입점**: `infra/envs/prod/main.tf`
+- **앱 코드**: `app/service/main.py`
+- **빌드 산출물**: `dist/lambda-app.zip`, `dist/lambda-layer.zip`
+- **테스트 엔드포인트**: `/v0/health`
+- **프록시 엔드포인트**: `/v0/commit`
 
-현재 로컬 검증 기준:
+### 3. Quiz_Ai 최소 비용 env
 
-- Python 기본값보다 `python3.13` 사용이 안전함
-- `build -> pytest -> terraform validate` 순서로 보는 것이 안정적임
-- `prod` 환경의 `backend.hcl`, `terraform.tfvars` 는 로컬 전용으로 `.gitignore` 에 포함되어 있음
+- **진입점**: `infra/envs/quiz-ai-prod/main.tf`
+- **기본 인스턴스**: Lightsail `micro_3_0`
+- **생성 리소스**: instance, static IP, static IP attachment, public ports
+- **DNS 옵션**: `hosted_zone_id`를 설정하면 `quiz.juwonpark.me` A record 생성
+- **secret 처리**: Terraform state에 앱 secret을 넣지 않고 서버 내부 `.env`에 생성
 
-## 알려진 전제
+---
 
-- `prod` 환경은 DeepLX Lambda proxy 실습을 기준으로 잡혀 있다.
-- `enable_vpc = false` 이면 Lambda는 VPC 밖에서 실행되고, ALB만 VPC public subnet 위에 놓인다.
-- HTTPS / custom domain은 값이 주어졌을 때만 활성화된다.
-- backend bootstrap 자원은 Terraform 관리 범위와 분리해서 보는 편이 안전하다.
+## 🔧 트러블슈팅
 
-## 라이선스
+### Terraform state bucket이 없다는 오류
 
-현재 저장소에는 별도 `LICENSE` 파일이 없다.  
-외부 공개용으로 사용할 계획이면 라이선스 정책을 먼저 정리하는 것이 맞다.
+**증상**:
+```text
+Error loading the state: S3 bucket ... does not exist
+```
+
+**해결 방법**:
+1. `docs/terraform-state-bucket-setup.md`를 먼저 확인합니다.
+2. backend S3 bucket과 DynamoDB lock table을 생성합니다.
+3. env의 `backend.hcl` 값을 실제 이름으로 수정합니다.
+4. `terraform init -reconfigure -backend-config=backend.hcl`을 실행합니다.
+
+### Lambda artifact 파일이 없다는 오류
+
+**증상**:
+```text
+dist/lambda-app.zip: no such file or directory
+```
+
+**해결 방법**:
+1. `PYTHON_BIN=python3.13 bash scripts/build-lambda.sh`를 실행합니다.
+2. `dist/lambda-app.zip`과 `dist/lambda-layer.zip` 생성 여부를 확인합니다.
+3. 다시 `terraform -chdir=infra/envs/prod plan`을 실행합니다.
+
+### Lightsail DNS record가 생성되지 않음
+
+**증상**: plan에 `aws_route53_record`가 나오지 않음
+
+**해결 방법**:
+1. 해당 env의 `domain_name`이 `null`이 아닌지 확인합니다.
+2. `hosted_zone_id`가 실제 Route53 hosted zone ID인지 확인합니다.
+3. DNS를 수동 관리할 계획이면 record가 없는 것이 정상입니다.
+
+## 📄 라이선스
+
+현재 저장소에는 별도 `LICENSE` 파일이 없습니다. 외부 공개 또는 재사용 범위를 정하려면 라이선스 정책을 먼저 확정해야 합니다.
+
+---
+
+## 📞 문의
+
+- **이메일**: hello@juwonpark.me
+- **GitHub**: [@juwonparkme](https://github.com/juwonparkme)
+- **웹사이트**: [juwonpark.me](https://juwonpark.me)
+
+<div align="center">
+
+**Made by Juwon Park**
+
+[⬆ 맨 위로 이동](#top)
+
+</div>

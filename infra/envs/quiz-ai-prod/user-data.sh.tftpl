@@ -1,0 +1,147 @@
+#!/bin/bash
+set -euxo pipefail
+
+export DEBIAN_FRONTEND=noninteractive
+
+APP_DIR="${app_directory}"
+REPO_URL="${repo_url}"
+REPO_BRANCH="${repo_branch}"
+DOMAIN_NAME="${domain_name}"
+SERVICE_NAME="quiz-ai"
+APP_USER="ubuntu"
+DB_NAME="quiz_ai"
+DB_USER="quiz_ai"
+ENV_FILE="$APP_DIR/.env"
+
+apt-get update
+apt-get install -y ${bootstrap_packages}
+systemctl enable --now mysql nginx
+
+mkdir -p "$APP_DIR"
+
+if [ ! -d "$APP_DIR/.git" ]; then
+  git clone --depth 1 --branch "$REPO_BRANCH" "$REPO_URL" "$APP_DIR"
+else
+  git -C "$APP_DIR" fetch origin "$REPO_BRANCH"
+  git -C "$APP_DIR" checkout "$REPO_BRANCH"
+  git -C "$APP_DIR" merge --ff-only "origin/$REPO_BRANCH"
+fi
+
+if [ ! -f "$ENV_FILE" ]; then
+  cp "$APP_DIR/.env.example" "$ENV_FILE"
+fi
+
+SECRET_KEY="$(python3 - <<'PY'
+import secrets
+print(secrets.token_urlsafe(64))
+PY
+)"
+DB_PASSWORD="$(python3 - <<'PY'
+import secrets
+print(secrets.token_urlsafe(32))
+PY
+)"
+
+python3 - "$ENV_FILE" "$SECRET_KEY" "$DB_NAME" "$DB_USER" "$DB_PASSWORD" "$DOMAIN_NAME" <<'PY'
+import sys
+from pathlib import Path
+
+env_path = Path(sys.argv[1])
+secret_key = sys.argv[2]
+db_name = sys.argv[3]
+db_user = sys.argv[4]
+db_password = sys.argv[5]
+domain_name = sys.argv[6]
+
+updates = {
+    "SECRET_KEY": secret_key,
+    "DEBUG": "False",
+    "ALLOWED_HOSTS": f"{domain_name},127.0.0.1,localhost" if domain_name else "127.0.0.1,localhost",
+    "CSRF_TRUSTED_ORIGINS": f"https://{domain_name}" if domain_name else "",
+    "SITE_DOMAIN": domain_name or "localhost",
+    "SITE_NAME": "Quiz_AI",
+    "ACCOUNT_DEFAULT_HTTP_PROTOCOL": "https" if domain_name else "http",
+    "SECURE_SSL_REDIRECT": "False",
+    "SESSION_COOKIE_SECURE": "False",
+    "CSRF_COOKIE_SECURE": "False",
+    "SECURE_HSTS_SECONDS": "0",
+    "DATABASE_NAME": db_name,
+    "DATABASE_USER": db_user,
+    "DATABASE_PASSWORD": db_password,
+    "DATABASE_HOST": "127.0.0.1",
+    "DATABASE_PORT": "3306",
+    "OPENAI_API_KEY": "change-me",
+    "GOOGLE_CLIENT_ID": "change-me",
+    "GOOGLE_SECRET": "change-me",
+    "EMAIL_HOST_USER": "change-me",
+    "EMAIL_HOST_PASSWORD": "change-me",
+    "DEFAULT_FROM_EMAIL": "change-me",
+}
+
+seen = set()
+lines = []
+for line in env_path.read_text().splitlines():
+    if "=" not in line or line.lstrip().startswith("#"):
+        lines.append(line)
+        continue
+    key, _ = line.split("=", 1)
+    if key in updates:
+        lines.append(f"{key}={updates[key]}")
+        seen.add(key)
+    else:
+        lines.append(line)
+
+for key, value in updates.items():
+    if key not in seen:
+        lines.append(f"{key}={value}")
+
+env_path.write_text("\n".join(lines).rstrip() + "\n")
+PY
+
+mysql --protocol=socket <<SQL
+CREATE DATABASE IF NOT EXISTS \`$DB_NAME\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER IF NOT EXISTS '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD';
+ALTER USER '$DB_USER'@'localhost' IDENTIFIED BY '$DB_PASSWORD';
+GRANT ALL PRIVILEGES ON \`$DB_NAME\`.* TO '$DB_USER'@'localhost';
+FLUSH PRIVILEGES;
+SQL
+
+chown -R "$APP_USER:$APP_USER" "$APP_DIR"
+chmod 600 "$ENV_FILE"
+
+sudo -u "$APP_USER" python3 -m venv "$APP_DIR/.venv"
+sudo -u "$APP_USER" "$APP_DIR/.venv/bin/python" -m pip install --upgrade pip
+sudo -u "$APP_USER" "$APP_DIR/.venv/bin/pip" install -r "$APP_DIR/requirements.txt"
+
+sudo -u "$APP_USER" "$APP_DIR/.venv/bin/python" "$APP_DIR/manage.py" migrate --noinput
+sudo -u "$APP_USER" "$APP_DIR/.venv/bin/python" "$APP_DIR/manage.py" collectstatic --noinput
+sudo -u "$APP_USER" "$APP_DIR/.venv/bin/python" "$APP_DIR/manage.py" check
+
+install -m 0644 "$APP_DIR/deploy/nginx/quiz-ai.conf" /etc/nginx/sites-available/quiz-ai
+ln -sf /etc/nginx/sites-available/quiz-ai /etc/nginx/sites-enabled/quiz-ai
+rm -f /etc/nginx/sites-enabled/default
+nginx -t
+systemctl reload nginx
+
+cat >/etc/systemd/system/$SERVICE_NAME.service <<UNIT
+[Unit]
+Description=Quiz AI Gunicorn service
+After=network.target mysql.service
+Requires=mysql.service
+
+[Service]
+User=$APP_USER
+Group=$APP_USER
+WorkingDirectory=$APP_DIR
+EnvironmentFile=$ENV_FILE
+ExecStart=$APP_DIR/.venv/bin/gunicorn mysite.wsgi:application --bind 127.0.0.1:8000 --workers 2 --timeout 120
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
+UNIT
+
+systemctl daemon-reload
+systemctl enable --now "$SERVICE_NAME"
+systemctl is-active --quiet "$SERVICE_NAME"
